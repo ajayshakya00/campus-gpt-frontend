@@ -2,12 +2,13 @@
 import { useSupabaseContext } from "@/providers/supabse.provider";
 import { useAxios } from "@/services/axios/axios.hooks";
 import { UserRoles } from "@/types/global.types";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect } from "react";
 import axiosLib from "axios";
 
 export default function Layout({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isLoading } = useSupabaseContext();
   const { axios } = useAxios();
   useEffect(() => {
@@ -24,13 +25,17 @@ export default function Layout({ children }: { children: ReactNode }) {
       try {
         const res = await axios.get("/education/course/joined");
         if (res.data.data) {
-          router.replace("/dashboard");
-        } else {
+          if (pathname === "/select-course") {
+            router.replace("/dashboard");
+          }
+        } else if (pathname !== "/select-course") {
           router.replace("/select-course");
         }
       } catch (err: any) {
         if (axiosLib.isAxiosError(err) && err.response?.status === 404) {
-          router.replace("/select-course");
+          if (pathname !== "/select-course") {
+            router.replace("/select-course");
+          }
         } else {
           console.error("Unexpected error:", err);
           // Optionally handle other errors (e.g., 500, 401) differently
@@ -39,7 +44,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     }
 
     checkCourseJoined();
-  }, [user, isLoading]);
+  }, [user?.id, isLoading]);
 
   if (isLoading) return <>Loading ...</>;
   return <>{children}</>;
