@@ -26,7 +26,6 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const router = useRouter();
 
   const handleEmailSignup = async (e: React.FormEvent) => {
@@ -34,13 +33,10 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo:
-          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
-          `${window.location.origin}/api/callback`,
         data: {
           name,
           role: UserRoles.USER,
@@ -51,9 +47,22 @@ export default function SignupPage() {
     if (error) {
       setError(error.message);
       setLoading(false);
+      return;
+    }
+
+    if (data?.session) {
+      router.push("/dashboard");
     } else {
-      setSuccess(true);
-      setLoading(false);
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (signInError) {
+        setError(signInError.message);
+        setLoading(false);
+      } else {
+        router.push("/dashboard");
+      }
     }
   };
 
@@ -75,38 +84,6 @@ export default function SignupPage() {
       setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <Card className="w-full max-w-md border-border bg-card">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center">
-              Check your email
-            </CardTitle>
-            <CardDescription className="text-center text-muted-foreground">
-              We&apos;ve sent you a confirmation link to verify your account.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md bg-primary/10 p-4 text-sm text-primary">
-              Please check your email and click the confirmation link to
-              complete your registration.
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button
-              variant="outline"
-              className="w-full bg-transparent"
-              onClick={() => router.push("/login")}
-            >
-              Back to login
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">

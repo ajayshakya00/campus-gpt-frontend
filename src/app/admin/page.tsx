@@ -106,9 +106,7 @@ export default function AdminDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div
-                    className={`text-4xl font-bold bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}
-                  >
+                  <div className="text-4xl font-extrabold text-foreground tracking-tight">
                     {stat.value}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
